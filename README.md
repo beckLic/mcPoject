@@ -6,3 +6,8 @@ Esta idea surge de que en esta empresa toman pruebas constantemente a los emplea
 
 
 
+Tecnologias:
+
+Frontend: Next.js + Tailwind CSS para una interfaz rápida y responsiva.
+Backend: Node.js como capa de validación y lógica de negocio compleja.
+BaaS: Supabase para persistencia, autenticación y notificaciones en tiempo real.
