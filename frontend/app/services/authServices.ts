@@ -1,13 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "@/lib/supabase";
 
 // Type definitions
 interface Coach {
@@ -51,27 +42,27 @@ export async function getCoaches(): Promise<string[]> {
  * @param legajo - Employee ID number
  * @returns User object if found, null otherwise
  */
-export async function validateCoach(
-  name: string,
-  legajo: string
-): Promise<UserProfile | null> {
+export async function validateCoach(name: string, legajo: string) {
   try {
+    // Sanitización: quitamos espacios vacíos accidentales
+    const cleanName = name.trim();
+    const cleanLegajo = legajo.trim();
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('full_name', name)
-      .eq('legajo', legajo)
+      .eq('full_name', cleanName)
+      .eq('legajo', cleanLegajo)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 is "no rows returned" error, which is expected
-      console.error('Error validating coach:', error.message);
+    if (error) {
+      console.error('Validation error:', error.message);
       return null;
     }
 
-    return data || null;
+    return data;
   } catch (err) {
-    console.error('Unexpected error in validateCoach:', err);
+    console.error('Unexpected error:', err);
     return null;
   }
-} 
+}

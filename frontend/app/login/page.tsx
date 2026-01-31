@@ -34,8 +34,15 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
+    const trimmedLegajo = legajo.trim(); // Limpieza local
+
+    if (!nombre || !trimmedLegajo) {
+        setError('Por favor, completá todos los campos.');
+        return;
+    }
+
     // Validation
-    if (!nombre || !legajo) {
+    if (!nombre || !trimmedLegajo) {
       setError('Por favor completa todos los campos');
       return;
     }
@@ -43,7 +50,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const user = await validateCoach(nombre, legajo);
+      const user = await validateCoach(nombre, trimmedLegajo);
 
       if (user) {
         // Save user profile to localStorage

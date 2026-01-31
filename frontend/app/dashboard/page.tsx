@@ -1,11 +1,54 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 
+// Type definition for user profile
+interface UserProfile {
+  id: string;
+  full_name: string;
+  legajo: string;
+  role: string;
+  [key: string]: unknown;
+}
+
 export default function Dashboard() {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Authentication Guard
+  useEffect(() => {
+    const userProfileString = localStorage.getItem('userProfile');
+    
+    if (userProfileString) {
+      try {
+        const userProfile = JSON.parse(userProfileString);
+        setUser(userProfile);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error parsing user profile:', error);
+        router.push('/login');
+      }
+    } else {
+      router.push('/login');
+    }
+  }, [router]);
+
+  // Prevent UI flickering - Loading state
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-red-600 font-semibold text-lg">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   const menuItems = [
     { label: 'Inicio', href: '/dashboard', icon: '🏠' },
@@ -67,7 +110,7 @@ export default function Dashboard() {
           >
             <Menu size={28} className="text-red-600" />
           </button>
-          <h1 className="text-2xl font-bold text-red-600">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-red-600">{user?.full_name || 'Dashboard'}</h1>
           <div className="w-10" />
         </div>
 
