@@ -1,0 +1,86 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const menuItems = [
+    { label: 'Inicio', href: '/dashboard', icon: '🏠' },
+    { label: 'Servicio', href: '/dashboard/servicio', icon: '👥' },
+    { label: 'Cocina', href: '/dashboard/cocina', icon: '👨‍🍳' },
+    { label: 'Lobby', href: '/dashboard/lobby', icon: '🪑' },
+    { label: 'CDP', href: '/dashboard/cdp', icon: '🍦' },
+  ];
+
+  return (
+    <div className="flex min-h-screen bg-white">
+      {/* Sidebar/Drawer */}
+      <div
+        className={`fixed inset-y-0 left-0 w-64 bg-red-600 text-white shadow-lg transition-transform duration-300 ease-in-out z-40 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between p-6 border-b border-red-700">
+          <h2 className="text-xl font-bold">McSimple</h2>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-2 hover:bg-red-700 rounded-lg transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Sidebar Links */}
+        <nav className="p-4 space-y-2">
+          {menuItems.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              <span className="text-2xl">{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1">
+        {/* Top Bar */}
+        <div className="flex items-center justify-between p-6 bg-white border-b border-gray-200">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Menu size={28} className="text-red-600" />
+          </button>
+          <h1 className="text-2xl font-bold text-red-600">Bienvenido a McSimple</h1>
+          <div className="w-10" />
+        </div>
+
+        {/* Content Area */}
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
