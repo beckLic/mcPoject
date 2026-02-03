@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // Type definition for user profile
 interface UserProfile {
@@ -48,10 +49,10 @@ export default function Dashboard() {
   }
 
   const gridItems = [
-    { label: 'Servicio', icon: '👥' },
-    { label: 'Cocina', icon: '👨‍🍳' },
-    { label: 'Lobby', icon: '🪑' },
-    { label: 'CDP', icon: '🍦' },
+    { label: 'Servicio', icon: '👥', href: '/dashboard/servicio' },
+    { label: 'Cocina', icon: '👨‍🍳', href: '/dashboard/cocina' },
+    { label: 'Lobby', icon: '🪑', href: '/dashboard/lobby' },
+    { label: 'CDP', icon: '🍦', href: '/dashboard/cdp' },
   ];
 
   return (
@@ -59,13 +60,14 @@ export default function Dashboard() {
       <div className="w-full max-w-2xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {gridItems.map((item) => (
-            <button
+            <Link
               key={item.label}
+              href={item.href}
               className="aspect-square bg-red-600 hover:bg-red-700 text-white rounded-lg flex flex-col items-center justify-center gap-3 font-bold text-lg transition-colors shadow-lg hover:shadow-xl"
             >
               <span className="text-6xl">{item.icon}</span>
               <span>{item.label}</span>
-            </button>
+            </Link>
           ))}
         </div>
       </div>
