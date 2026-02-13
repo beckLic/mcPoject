@@ -1,19 +1,40 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { createCard } from '@/app/services/cardServices';
+import { createCard, updateCard } from '@/app/services/cardServices';
+
+interface Tarjeta {
+  id: string;
+  title: string;
+  content: string;
+  section: string;
+  created_by?: string;
+  updated_by?: string;
+}
 
 interface AddCardModalProps {
   isOpen: boolean;
   onClose: () => void;
   sectionName: string;
+  cardToEdit?: Tarjeta | null;
 }
 
-export default function AddCardModal({ isOpen, onClose, sectionName }: AddCardModalProps) {
+export default function AddCardModal({ isOpen, onClose, sectionName, cardToEdit }: AddCardModalProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Pre-fill for editing
+  useEffect(() => {
+    if (cardToEdit) {
+      setTitle(cardToEdit.title);
+      setContent(cardToEdit.content);
+    } else {
+      setTitle('');
+      setContent('');
+    }
+  }, [cardToEdit, isOpen]);
 
   if (!isOpen) return null;
 
@@ -22,35 +43,34 @@ export default function AddCardModal({ isOpen, onClose, sectionName }: AddCardMo
     setIsSubmitting(true);
 
     try {
-      // Get user profile from localStorage
-      const userProfileStr = localStorage.getItem('userProfile');
-      const userProfile = userProfileStr ? JSON.parse(userProfileStr) : null;
-      
-      if (!userProfile || !userProfile.id) {
-        alert('Error: No se encontró información del usuario. Por favor, inicia sesión nuevamente.');
-        setIsSubmitting(false);
-        return;
+      const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      const userName = userProfile.full_name || userProfile.email || 'Entrenador';
+
+      if (cardToEdit) {
+        // Edit mode
+        await updateCard(cardToEdit.id, {
+          title: title.trim(),
+          content: content.trim(),
+          section: sectionName.trim(),
+          updated_by: userName,
+        });
+      } else {
+        // Create mode
+        await createCard({
+          title: title.trim(),
+          content: content.trim(),
+          section: sectionName.trim(),
+          created_by: userName,
+          updated_by: userName,
+        });
       }
 
-      // Create card object
-      const cardData = {
-        title: title.trim(),
-        content: content.trim(),
-        section: sectionName.trim(),
-        created_by: userProfile.id,
-        updated_by: userProfile.id,
-      };
-
-      // Call the service
-      await createCard(cardData);
-
-      // Clear form and close modal
       setTitle('');
       setContent('');
       onClose();
     } catch (error) {
-      console.error('Error creating card:', error);
-      alert('Error al crear la tarjeta. Por favor, intenta nuevamente.');
+      console.error('Error creating/updating card:', error);
+      alert('Error al guardar la tarjeta. Por favor, intenta nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +87,9 @@ export default function AddCardModal({ isOpen, onClose, sectionName }: AddCardMo
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Nueva Tarjeta</h2>
+          <h2 className="text-xl font-bold text-white">
+            {cardToEdit ? 'Editar Tarjeta' : 'Nueva Tarjeta'}
+          </h2>
           <button
             onClick={handleCancel}
             className="text-white hover:bg-red-700 rounded-full p-1 transition-colors"
@@ -133,7 +155,7 @@ export default function AddCardModal({ isOpen, onClose, sectionName }: AddCardMo
               disabled={isSubmitting}
               className="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Guardando...' : 'Aceptar'}
+              {isSubmitting ? 'Guardando...' : cardToEdit ? 'Actualizar' : 'Aceptar'}
             </button>
           </div>
         </form>

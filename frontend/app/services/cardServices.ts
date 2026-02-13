@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 
 // Type definition for Tarjeta (Card)
 export interface Tarjeta {
-  uuid: string;
+  id: string;
   title: string;
   content: string;
   section: string;
@@ -69,17 +69,17 @@ export async function createCard(cardData: Partial<Tarjeta>): Promise<Tarjeta | 
  * @param updates - Partial card data to update
  * @returns The updated card or null if failed
  */
-export async function updateCard(uuid: string, updates: Partial<Tarjeta>): Promise<Tarjeta | null> {
+export async function updateCard(id: string, updates: Partial<Tarjeta>): Promise<Tarjeta | null> {
   try {
     const { data, error } = await supabase
       .from('cards')
       .update(updates)
-      .eq('uuid', uuid)
+      .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error(`Error updating card with uuid "${uuid}":`, error.message);
+      console.error(`Error updating card with id "${id}":`, error.message);
       throw new Error(`Failed to update card: ${error.message}`);
     }
 
@@ -100,12 +100,12 @@ export async function deleteCard(uuid: string): Promise<Tarjeta | null> {
     const { data, error } = await supabase
       .from('cards')
       .update({ deleted_at: new Date().toISOString() })
-      .eq('uuid', uuid)
+      .eq('id', uuid)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error(`Error deleting card with uuid "${uuid}":`, error.message);
+      console.error(`Error deleting card with id "${uuid}":`, error.message);
       throw new Error(`Failed to delete card: ${error.message}`);
     }
 
