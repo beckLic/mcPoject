@@ -8,9 +8,15 @@ interface Coach {
 interface UserProfile {
   id: string;
   full_name: string;
+  email: string;
   legajo: string;
   role: string;
   [key: string]: unknown;
+}
+
+interface LoginCredentials {
+  email: string;
+  password: string;
 }
 
 /**
@@ -63,6 +69,44 @@ export async function validateCoach(name: string, legajo: string) {
     return data;
   } catch (err) {
     console.error('Unexpected error:', err);
+    return null;
+  }
+}
+
+/**
+ * Authenticates a user with email/password and returns its profile
+ * @param email - User email
+ * @param password - User password
+ * @returns User profile if auth succeeds, null otherwise
+ */
+export async function loginUser(email: string, password: string): Promise<UserProfile | null> {
+  try {
+    const credentials: LoginCredentials = {
+      email: email.trim(),
+      password,
+    };
+
+    const { data, error } = await supabase.auth.signInWithPassword(credentials);
+
+    if (error || !data.user) {
+      console.error('Login error:', error?.message || 'No user returned by Supabase auth');
+      return null;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError?.message || 'Profile not found');
+      return null;
+    }
+
+    return profile as UserProfile;
+  } catch (err) {
+    console.error('Unexpected error in loginUser:', err);
     return null;
   }
 }

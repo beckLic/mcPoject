@@ -1,48 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCoaches, validateCoach } from '@/app/services/authServices';
+import { loginUser } from '@/app/services/authServices';
 
 export default function Login() {
   const router = useRouter();
-  const [coaches, setCoaches] = useState<string[]>([]);
-  const [nombre, setNombre] = useState('');
-  const [legajo, setLegajo] = useState('');
+  const [selectedRole, setSelectedRole] = useState('Crew');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingCoaches, setLoadingCoaches] = useState(true);
-
-  // Load coaches on component mount
-  useEffect(() => {
-    const loadCoaches = async () => {
-      try {
-        const coachesList = await getCoaches();
-        setCoaches(coachesList);
-      } catch (err) {
-        console.error('Failed to load coaches:', err);
-        setCoaches([]);
-      } finally {
-        setLoadingCoaches(false);
-      }
-    };
-
-    loadCoaches();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
-    const trimmedLegajo = legajo.trim(); // Limpieza local
+    const trimmedEmail = email.trim();
 
-    if (!nombre || !trimmedLegajo) {
-        setError('Por favor, completá todos los campos.');
-        return;
-    }
-
-    // Validation
-    if (!nombre || !trimmedLegajo) {
+    if (!trimmedEmail || !password) {
       setError('Por favor completa todos los campos');
       return;
     }
@@ -50,16 +26,20 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const user = await validateCoach(nombre, trimmedLegajo);
+      const profile = await loginUser(trimmedEmail, password);
 
-      if (user) {
-        // Save user profile to localStorage
-        localStorage.setItem('userProfile', JSON.stringify(user));
-        // Redirect to dashboard
-        router.push('/dashboard');
-      } else {
-        setError('Nombre o legajo inválido. Intenta nuevamente.');
+      if (!profile) {
+        setError('Email o contraseña inválidos. Intenta nuevamente.');
+        return;
       }
+
+      if (profile.role !== selectedRole) {
+        setError('El rol seleccionado no coincide con su cuenta');
+        return;
+      }
+
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+      router.push('/dashboard/servicio');
     } catch (err) {
       console.error('Login error:', err);
       setError('Ocurrió un error durante el inicio de sesión. Intenta nuevamente.');
@@ -69,59 +49,54 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      {/* Red Header with Curved Bottom */}
-      <div className="relative bg-red-600 pt-12 pb-20">
-        <h1 className="text-center text-3xl font-bold text-black">Iniciar Sesión</h1>
+    <div className="flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-md">
+        <h1 className="mb-8 text-center text-3xl font-bold text-red-600">Bienvenido a McSimple</h1>
 
-        {/* Curved Bottom Edge */}
-        <div className="absolute -bottom-12 left-0 right-0 h-12 bg-white rounded-t-3xl"></div>
-      </div>
-
-      {/* Main Form Container */}
-      <div className="flex flex-1 items-center justify-center px-4 pt-16">
-        <form onSubmit={handleLogin} className="w-full max-w-sm space-y-8">
-          {/* Name Select */}
+        <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">Nombre</label>
+            <label className="block text-sm font-semibold text-gray-800">Rol</label>
             <select
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              disabled={loadingCoaches || loading}
-              className="w-full border-b-2 border-black bg-transparent py-3 text-gray-800 focus:outline-none focus:border-red-600 placeholder-gray-400 transition-colors disabled:opacity-50"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50"
             >
-              <option value="" disabled>
-                {loadingCoaches ? 'Cargando nombres...' : 'Selecciona un nombre'}
-              </option>
-              {coaches.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
+              <option value="Crew">Crew</option>
+              <option value="Entrenador">Entrenador</option>
             </select>
           </div>
 
-          {/* Legajo Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-800">Legajo</label>
+            <label className="block text-sm font-semibold text-gray-800">Email / Usuario</label>
             <input
-              type="text"
-              value={legajo}
-              onChange={(e) => setLegajo(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              placeholder="Ingresa tu legajo"
-              className="w-full border-b-2 border-black bg-transparent py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-red-600 transition-colors disabled:opacity-50"
+              placeholder="Ingresa tu email o usuario"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-800">Contraseña</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              placeholder="Ingresa tu contraseña"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:opacity-50"
             />
 
-            {/* Error Message */}
             {error && <p className="mt-2 text-sm font-medium text-red-600">{error}</p>}
           </div>
 
-          {/* Login Button */}
           <button
             type="submit"
-            disabled={loading || loadingCoaches}
-            className="w-full rounded-lg bg-red-600 py-4 text-lg font-bold text-white hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors shadow-md hover:shadow-lg mt-12"
+            disabled={loading}
+            className="mt-4 w-full rounded-lg bg-red-600 py-4 text-lg font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400"
           >
             {loading ? 'Ingresando...' : 'Iniciar Sesión'}
           </button>
